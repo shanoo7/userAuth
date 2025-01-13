@@ -74,6 +74,26 @@ class UserFunction {
             res.status(500).json({ message: "Internal server error" })
         }
     }
+
+    //CHANGE USER PASSWORD
+    static changeUserPassword = async (req,res)=>{
+        const {password,confPassword} = req.body
+
+        if(password && confPassword){
+            if(password === confPassword){
+            
+                const newPassword = await bcryptjs.hash(password,10)
+                await userModal.findByIdAndUpdate(res.user._id,{$set:{password:newPassword}})
+                res.status(201).json({message:"Password changed successfully"})
+                // console.log(newPassword)
+
+            }else{
+                res.status(401).json({message:"Password does not match"})
+            }
+        }else{
+            res.status(401).json({message:"All feilds are required"})
+        }
+    }
 }
 
 export default UserFunction;      
