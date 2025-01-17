@@ -17,7 +17,7 @@ const CheckAuthUser = async (req, res, next) => {
             const { userID } = jwt.verify(token, process.env.JWT_KEY)
             // console.log(userID)
             //get user from token
-            res.user = await userModal.findById(userID).select('-password')
+            req.user = await userModal.findById(userID).select("-password")
             next()
         } else {
             res.status(404).json({ message: "token invalid" })
