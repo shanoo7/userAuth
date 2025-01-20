@@ -1,21 +1,14 @@
-import React from 'react'
-import Navbar from './components/Navbar'
-import Login from './pages/Login'
-import { Toaster } from 'react-hot-toast';
-import Signup from './pages/Signup';
+// import React from 'react'
 
-function App() {
-  return (
-    <>
-    <div className=''>
-    <Navbar/>
-    <Login/>
-    <Signup/>
-    </div>
- 
-    <Toaster/>
-    </>
-  )
-}
+// import { Toaster } from 'react-hot-toast';
 
-export default App
+// function App() {
+//   return (
+//     <>
+
+//    <Toaster/>
+//     </>
+//   )
+// }
+
+// export default App;
