@@ -2,6 +2,7 @@ import React from 'react'
 import Navbar from './components/Navbar.jsx'
 import { Outlet } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import Footer from './components/Footer.jsx'
 
 function Layouts() {
   return (
@@ -9,6 +10,7 @@ function Layouts() {
       <div className=''>
       <Navbar />
       <Outlet />
+      <Footer/>
       <Toaster />
       </div>
     </>

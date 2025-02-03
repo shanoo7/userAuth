@@ -7,7 +7,7 @@ class UserFunction {
 
     //CREATE USER
     static createUser = async (req, res) => {
-        const { name, email, password, confPassword, tc } = req.body;
+        const { name, email, password, confPassword, tc, role } = req.body;
         const user = await userModal.findOne({ email: email })
         try {
             if (name && email && password && confPassword && tc) {
@@ -19,17 +19,18 @@ class UserFunction {
                             name: name,
                             email: email,
                             password: hashPass,
-                            tc: tc
+                            tc: tc,
+                            role: role
                         })
                         await user.save();
 
                         // JWT TOKEN START
                         const savedUser = await userModal.findOne({ email: email });
-                        const token = jwt.sign({ userID: savedUser._id }, process.env.JWT_KEY, { expiresIn: '5m' })
+                        const token = jwt.sign({ userID: savedUser._id, role: user.role }, process.env.JWT_KEY, { expiresIn: '5m' })
                         // JWT TOKEN END
 
                         // CREATEUSERDATA
-                        res.status(201).json({ message: "User created successfully", savedUser, 'token': token })
+                        res.status(201).json({ success: true, data: savedUser, token: token, message: "User created successfully" })
 
                     } else {
                         res.status(400).json({ message: "Password does not match" })
@@ -41,7 +42,7 @@ class UserFunction {
                 res.status(400).json({ message: "All fields are required" })
             }
         } catch (error) {
-            res.status(500).json({ message: "internal server error" })
+            res.status(500).json({ success: false, error: error.message, message: "internal server error" })
         }
 
     }
@@ -57,9 +58,9 @@ class UserFunction {
                     if (isMatch && user.email === email) {
 
                         // JWT TOKEN START
-                        const token = jwt.sign({ userID: user._id }, process.env.JWT_KEY, { expiresIn: '1d' })
+                        const token = jwt.sign({ userID: user._id, role: user.role }, process.env.JWT_KEY, { expiresIn: '1d' })
                         // JWT TOKEN END
-                        res.status(201).json({ message: "User login successfully", user, "token": token })
+                        res.status(201).json({ success: true, data: user, token: token, message: "User login successfully" })
                     } else {
                         res.status(401).json({ message: "User email & password does not match" })
                     }
@@ -71,41 +72,70 @@ class UserFunction {
                 res.status(400).json({ message: "All fields are required" })
             }
         } catch (error) {
-            res.status(500).json({ message: "Internal server error" })
+            res.status(500).json({ success: false, error: error.message, message: "Internal server error" })
         }
     }
 
     //CHANGE USER PASSWORD
     static changeUserPassword = async (req, res) => {
-        const { oldPassword, password, confPassword } = req.body
+        try {
+            const { oldPassword, password, confPassword } = req.body
 
-        if (oldPassword && password && confPassword) {
-            if (password === confPassword) {
-                const user = await userModal.findById(req.user._id)
-                if (!user) {
-                    res.status(401).json({ message: "user not found" })
-                }
-                const isMatch = await bcryptjs.compare(oldPassword, user.password)
-                if (!isMatch) {
-                    res.status(401).json({ message: "oldPassword incorrect" })
+            if (oldPassword && password && confPassword) {
+                if (password === confPassword) {
+                    const user = await userModal.findById(req.user._id)
+                    if (!user) {
+                        res.status(401).json({ message: "user not found" })
+                    }
+                    const isMatch = await bcryptjs.compare(oldPassword, user.password)
+                    if (!isMatch) {
+                        res.status(401).json({ message: "oldPassword incorrect" })
+                    } else {
+                        const newPassword = await bcryptjs.hash(password, 10)
+                        await userModal.findByIdAndUpdate(req.user._id, { $set: { password: newPassword } })
+                        res.status(201).json({ success: true, message: "Password changed successfully" })
+                        // console.log(newPassword)
+                    }
+
                 } else {
-                    const newPassword = await bcryptjs.hash(password, 10)
-                    await userModal.findByIdAndUpdate(req.user._id, { $set: { password: newPassword } })
-                    res.status(201).json({ message: "Password changed successfully" })
-                    // console.log(newPassword)
+                    res.status(401).json({ message: "Password does not match" })
                 }
-
             } else {
-                res.status(401).json({ message: "Password does not match" })
+                res.status(401).json({ message: "All feilds are required" })
             }
-        } else {
-            res.status(401).json({ message: "All feilds are required" })
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message, message: "Internal server error" });
         }
     }
 
     //GET USER DETAILS
     static userDetails = async (req, res) => {
-        res.status(200).json({ "user": req.user })
+        try {
+            res.status(200).json({ success: true, data: req.user, message: "Get current user details" })
+
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message, message: "Internal server error" });
+        }
+    }
+
+    //GET ALL USERS
+    static getAllUsers = async (req, res) => {
+        try {
+            const users = await userModal.find().select("-password -__v -tokens")
+            res.status(200).json({ success: true, data: users, message: "All users retrieved successfully" })
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message, message: "Internal server error" });
+        }
+    }
+
+    //DELETE ALL USERS
+    static deleteAllUsers = async (req, res) => {
+        try {
+            const users = await userModal.deleteMany({});
+            res.status(200).json({ success: true, deletedCount: users.deletedCount, message: "All users deleted successfully" })
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message, message: "Failed to delete users" });
+        }
     }
 
     //FORGET PASSWORD
