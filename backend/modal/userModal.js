@@ -25,8 +25,16 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ["user", "admin"],
         default: "user"
-      }
-},{timestamps:true})
+    },
+    otp: {
+        type: String,
+        default: null
+    },
+    otpExpiry: {
+        type: Date,
+        default: null
+    }
+}, { timestamps: true })
 
 //define modal
 const userModal = mongoose.model("user", userSchema)

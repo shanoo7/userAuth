@@ -8,6 +8,7 @@ import Signup from './pages/Signup.jsx'
 import Layouts from './Layouts.jsx'
 import Homepage from './pages/Homepage.jsx'
 import ProtectedRouts from './ProtectedRoutes.jsx'
+import OTPReset from './pages/OTPReset.jsx'
 
 
 const router = createBrowserRouter(
@@ -22,6 +23,8 @@ const router = createBrowserRouter(
       //publicRoutes
       <Route path='/login' element={<Login />} />
       <Route path='/signup' element={<Signup />} />
+      <Route path='/otp-reset' element={<OTPReset />} />
+      
     </Route>
   )
 )

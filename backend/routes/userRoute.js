@@ -13,8 +13,8 @@ router.use("/deleteAllUsers",CheckAuthUser(["admin"]))
 //public routes
 router.post("/createUser",UserFunction.createUser)
 router.post("/loginUser",UserFunction.loginUser)
-router.post("/forgotPassword",UserFunction.forgotPassword)
-router.post("/resetPassword/:id/:token",UserFunction.resetPassword)
+router.post("/generate-otp",UserFunction.forgotPassword)
+router.post("/verify-otp",UserFunction.resetPassword)
 
 //private routes
 router.post("/changeUserPassword",UserFunction.changeUserPassword)

@@ -145,17 +145,28 @@ class UserFunction {
             const user = await userModal.findOne({ email: email })
             console.log(user)
             if (user) {
-                const secretToken = user._id + process.env.JWT_KEY
-                const token = jwt.sign({ userID: user._id }, secretToken, { expiresIn: "50m" })
-                //frontend link
-                const link = `http://localhost:3000/forgotPassword/${user._id}/${token}`
-                console.log(link)
-                res.status(201).json({ message: "forget password link sent to the email" })
+                // const secretToken = user._id + process.env.JWT_KEY
+                // const token = jwt.sign({ userID: user._id }, secretToken, { expiresIn: "50m" })
+                // //frontend link
+                // const link = `http://localhost:3000/forgotPassword/${user._id}/${token}`
+                // console.log(link)
+
+                // Generate 6-digit OTP
+                const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                const otpExpiry = new Date(Date.now()) + 5 * 60 * 1000;
+                console.log(otp)
+                console.log(otpExpiry)
+                user.otp = otp;
+                user.otpExpiry = otpExpiry;
+                await user.save();
+
+                res.status(201).json({ success: true, message: "forget password OTP sent to the email" })
             } else {
-                res.status(401).json({ message: "email not found" })
+                res.status(401).json({ success: false, message: "email not found" })
             }
         } else {
-            res.status(401).json({ message: "email is required" })
+            res.status(401).json({ success: false, message: "email is required" })
+
         }
     }
 
