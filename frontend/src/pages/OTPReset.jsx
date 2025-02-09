@@ -1,10 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const OTPReset = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [step, setStep] = useState(1); // Step 1: Enter Email, Step 2: Enter OTP
+  const [step, setStep] = useState(1);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [intervalId, setIntervalId] = useState(null);
+
+  const navigate = useNavigate();
+
+  // Timer logic
+  useEffect(() => {
+    if (step === 2 && timeLeft > 0) {
+      const id = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+      setIntervalId(id);
+
+      return () => clearInterval(id);
+    }
+  }, [step, timeLeft]);
+
+  // Handle timer expiration
+  useEffect(() => {
+    if (timeLeft === 0) {
+      clearInterval(intervalId);
+    }
+  }, [timeLeft, intervalId]);
 
   // Request OTP
   const requestOTP = async () => {
@@ -15,23 +39,46 @@ const OTPReset = () => {
         body: JSON.stringify({ email }),
       });
       alert("OTP sent to email!");
-      setEmail("")
       setStep(2);
+      setTimeLeft(60); // Reset timer on OTP request
     } catch (error) {
-      console.log(`Error ${error}`);
+      console.error(error);
     }
   };
 
   // Verify OTP & Reset Password
   const verifyOTP = async () => {
-    const res = await fetch("http://localhost:3000/api/auth/verify-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, otp, newPassword }),
-    });
+    if (timeLeft <= 0) {
+      alert("OTP has expired!");
+      return;
+    }
 
-    const data = await res.json();
-    alert(data.message);
+    try {
+      const res = await fetch("http://localhost:3000/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp, newPassword }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Invalid OTP or error occurred");
+      } else {
+        alert("Password changed successfully!");
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("An error occurred. Please try again.");
+    }
+  };
+
+  // Format time display
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -43,6 +90,7 @@ const OTPReset = () => {
             <input
               type="email"
               placeholder="Enter your email"
+              value={email}
               className="w-full p-2 border rounded-md mb-4 outline-none focus:ring-2 focus:ring-blue-500"
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -55,25 +103,36 @@ const OTPReset = () => {
           </>
         ) : (
           <>
-            <h2 className="text-xl font-semibold text-center mb-4">Enter OTP</h2>
+            <div className="text-center mb-4">
+              <h2 className="text-xl font-semibold">Enter OTP</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Sent to {email} • Expires in {formatTime(timeLeft)}
+              </p>
+            </div>
+
             <input
               type="text"
               placeholder="Enter OTP"
+              value={otp}
               className="w-full p-2 border rounded-md mb-4 outline-none focus:ring-2 focus:ring-green-500"
               onChange={(e) => setOtp(e.target.value)}
             />
-            <h2 className="text-xl font-semibold text-center mb-4">New Password</h2>
+
             <input
               type="password"
               placeholder="Enter new password"
+              value={newPassword}
               className="w-full p-2 border rounded-md mb-4 outline-none focus:ring-2 focus:ring-red-500"
               onChange={(e) => setNewPassword(e.target.value)}
             />
+
             <button
               onClick={verifyOTP}
-              className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition duration-300"
+              disabled={timeLeft <= 0}
+              className={`w-full text-white py-2 rounded-md transition duration-300 ${timeLeft <= 0 ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
+                }`}
             >
-              Verify & Reset Password
+              {timeLeft > 0 ? "Verify & Reset Password" : "OTP Expired"}
             </button>
           </>
         )}

@@ -226,8 +226,8 @@ class UserFunction {
                     text: `Your OTP code is ${otp}`,
                 };
                 const info = await transporter.sendMail(receiver);
-                console.log("Message sent:", info);
-                res.status(201).json({ success: true, info: info, otp: otp, message: "Password reset OTP sent to your email" });
+                // console.log("Message sent:", info);
+                res.status(201).json({ success: true, info: info, message: "Password reset OTP sent to your email" });
             } else {
                 res.status(401).json({ success: false, message: "Email not found" });
             }
@@ -269,7 +269,7 @@ class UserFunction {
             return res.status(201).json({ message: "Password reset successfully" });
 
         } catch (error) {
-            console.error(error);
+            // console.error(error);
             return res.status(500).json({ message: "Internal server error" });
         }
     };
