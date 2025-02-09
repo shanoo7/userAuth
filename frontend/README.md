@@ -31,9 +31,14 @@ A secure Node.js API for user authentication using **JWT** (JSON Web Tokens).
 2. **Install dependencies**  
    `npm install`
 
-3. **Create `.env` file**  
-   Add these variables:
-    PORT = 4000
- MONGO_DB_URI = ''
- JWT_KEY = ''
-   ```env
+## Environment Variables  
+Create a `.env` file in the root directory and add :  
+
+```env
+PORT = ""
+MONGO_DB_URI = ""
+JWT_KEY = ""
+EMAIL_USER= ""
+EMAIL_PASS= ""
+EMAIL_PORT= ""
+
