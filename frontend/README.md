@@ -33,7 +33,7 @@ A secure Node.js API for user authentication using **JWT** (JSON Web Tokens).
 
 3. **Create `.env` file**  
    Add these variables:
-   ```env
- PORT = 4000
+    PORT = 4000
  MONGO_DB_URI = ''
  JWT_KEY = ''
+   ```env
