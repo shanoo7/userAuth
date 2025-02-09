@@ -52,9 +52,7 @@ function Signup() {
             newErrors.password = "Password must contain at least one special character!"
         } else if (!/[A-Z]/.test(signup.password)) {
             newErrors.password = "Password must contain one capital letter!"
-        } else if (error.password !== error.confPassword) {
-            newErrors.password = "Passwords do not match!"
-        }
+        } 
         //CONF PASSWORD ERRORS
         if (!signup.confPassword) {
             newErrors.confPassword = "Confirm Password is required!"

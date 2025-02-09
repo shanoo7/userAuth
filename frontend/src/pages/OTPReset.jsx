@@ -15,6 +15,7 @@ const OTPReset = () => {
         body: JSON.stringify({ email }),
       });
       alert("OTP sent to email!");
+      setEmail("")
       setStep(2);
     } catch (error) {
       console.log(`Error ${error}`);

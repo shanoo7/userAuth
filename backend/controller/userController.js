@@ -1,6 +1,7 @@
 import userModal from "../modal/userModal.js";
 import bcryptjs from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import nodemailer from 'nodemailer';
 
 
 class UserFunction {
@@ -139,61 +140,140 @@ class UserFunction {
     }
 
     //FORGET PASSWORD
+    // static forgotPassword = async (req, res) => {
+    //     const { email } = req.body;
+    //     if (email) {
+    //         const user = await userModal.findOne({ email: email })
+    //         console.log(user)
+    //         if (user) {
+
+    //             // Generate 6-digit OTP
+    //             const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    //             const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
+    //             console.log(otp)
+    //             console.log(otpExpiry)
+    //             user.otp = otp;
+    //             user.otpExpiry = otpExpiry;
+    //             await user.save();
+
+    //             // Send email with OTP
+    //             const transporter = nodemailer.createTransport({
+    //                 host: process.env.EMAIL_HOST,
+    //                 port: process.env.EMAIL_PORT,
+    //                 secure: false,
+    //                 auth: {
+    //                     user: process.env.EMAIL_USER,
+    //                     pass: process.env.EMAIL_PASS,
+    //                 },
+    //             });
+    //             ////
+
+    //             const info = await transporter.sendMail({
+    //                 from: process.env.EMAIL_FROM, // sender address
+    //                 to: email, // list of receivers
+    //                 subject: "Your OTP Code", // Subject line
+    //                 text: `Your OTP code is ${otp}`, // plain text body
+    //                 html: `<b>Your OTP code is ${otp}</b>`, // html body
+    //             });
+    //             console.log("Message sent: %s", info.messageId);
+
+
+
+    //             res.status(201).json({ success: true, message: "forget password OTP sent to the email" })
+    //         } else {
+    //             res.status(401).json({ success: false, message: "email not found" })
+    //         }
+    //     } else {
+    //         res.status(401).json({ success: false, message: "email is required" })
+
+    //     }
+    // }
+
+
     static forgotPassword = async (req, res) => {
         const { email } = req.body;
         if (email) {
-            const user = await userModal.findOne({ email: email })
-            console.log(user)
+            const user = await userModal.findOne({ email: email });
             if (user) {
-                // const secretToken = user._id + process.env.JWT_KEY
-                // const token = jwt.sign({ userID: user._id }, secretToken, { expiresIn: "50m" })
-                // //frontend link
-                // const link = `http://localhost:3000/forgotPassword/${user._id}/${token}`
-                // console.log(link)
+
+                // Check if OTP already exists and hasn't expired
+                if (user.otp && user.otpExpiry > Date.now()) {
+                    return res.status(400).json({ success: false, message: "OTP already sent. Please check your email." });
+                }
 
                 // Generate 6-digit OTP
                 const otp = Math.floor(100000 + Math.random() * 900000).toString();
-                const otpExpiry = new Date(Date.now()) + 5 * 60 * 1000;
-                console.log(otp)
-                console.log(otpExpiry)
+                const otpExpiry = new Date(Date.now() + 1 * 60 * 1000); // OTP expires in 1 minutes
                 user.otp = otp;
                 user.otpExpiry = otpExpiry;
                 await user.save();
 
-                res.status(201).json({ success: true, message: "forget password OTP sent to the email" })
+                // Send email with OTP
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    port: process.env.EMAIL_PORT,
+                    secure: true,
+                    auth: {
+                        user: process.env.EMAIL_USER,
+                        pass: process.env.EMAIL_PASS,
+                    },
+                });
+
+                const receiver = {
+                    from: process.env.EMAIL_USER,
+                    to: email,
+                    subject: "Your OTP Code",
+                    text: `Your OTP code is ${otp}`,
+                };
+                const info = await transporter.sendMail(receiver);
+                console.log("Message sent:", info);
+                res.status(201).json({ success: true, info: info, otp: otp, message: "Password reset OTP sent to your email" });
             } else {
-                res.status(401).json({ success: false, message: "email not found" })
+                res.status(401).json({ success: false, message: "Email not found" });
             }
         } else {
-            res.status(401).json({ success: false, message: "email is required" })
-
+            res.status(401).json({ success: false, message: "Email is required" });
         }
-    }
+    };
+
 
     //USER PASSWORD RESET
     static resetPassword = async (req, res) => {
-        const { password, confPassword } = req.body;
-        const { id, token } = req.params;
-        const user = await userModal.findById(id)
-        const secret_Token = user._id + process.env.JWT_KEY
-        console.log(user._id)
+        const { newPassword, otp } = req.body;
+
         try {
-            jwt.verify(token, secret_Token)
-            if (password && confPassword) {
-                if (password === confPassword) {
-                    const hashPass = await bcryptjs.hash(password, 10)
-                    await userModal.findByIdAndUpdate(user._id, { $set: { password: hashPass } })
-                    res.status(201).json({ message: "password reset successfully" })
-                } else {
-                    res.status(401).json({ message: "password does not match" })
-                }
-            } else {
-                res.status(401).json({ message: "all fields are required" })
+            if (!newPassword || !otp) {
+                return res.status(400).json({ message: "All fields are required" });
             }
+
+            // Find user by OTP
+            const user = await userModal.findOne({ otp: otp });
+
+            if (!user) {
+                return res.status(401).json({ message: "User not found" });
+            }
+
+            // Verify OTP and expiry
+            if (Date.now() > user.otpExpiry) {
+                return res.status(401).json({ message: "OTP has expired" });
+            }
+
+            // Hash new password
+            const hashPass = await bcryptjs.hash(newPassword, 10);
+
+            // Update user password and clear OTP fields
+            await userModal.findByIdAndUpdate(user._id, {
+                $set: { password: hashPass, otp: null, otpExpiry: null }
+            });
+
+            return res.status(201).json({ message: "Password reset successfully" });
+
         } catch (error) {
-            res.status(500).json({ message: "invailid token" })
+            console.error(error);
+            return res.status(500).json({ message: "Internal server error" });
         }
-    }
+    };
+
 
 }
 
