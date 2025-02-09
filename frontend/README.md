@@ -31,6 +31,8 @@ A secure Node.js API for user authentication using **JWT** (JSON Web Tokens).
 2. **Install dependencies**  
    `npm install`
 
+---
+
 ## Environment Variables  
 Create a `.env` file in the root directory and add :  
 
