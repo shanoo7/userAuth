@@ -69,7 +69,7 @@ function Login() {
 
     return (
         <>
-            <div className='max-w-screen-2xl container m-auto px-6 mt-10 h-screen'>
+            <div className='max-w-screen-2xl container m-auto px-6 pt-32 h-screen dark:bg-gray-700'>
                 <div className="card bg-blue-300 w-full sm:w-96 mx-auto">
                     <div className="card-body items-center text-center">
                         <h2 className="card-title text-xl sm:text-2xl md:text-3xl">Login!</h2>

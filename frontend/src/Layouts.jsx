@@ -4,6 +4,8 @@ import { Outlet } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import Footer from './components/Footer.jsx'
 
+
+
 function Layouts() {
   return (
     <>
@@ -11,7 +13,7 @@ function Layouts() {
       <Navbar />
       <Outlet />
       <Footer/>
-      <Toaster />
+      <Toaster/>
       </div>
     </>
   )
